@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build the warehouse from source data
+        run: python src/ingest.py --source sp500
+
+      - name: Verify warehouse integrity
+        run: |
+          python - <<'PY'
+          import sqlite3
+          c = sqlite3.connect("data/portfolio.db")
+          prices  = c.execute("SELECT COUNT(*) FROM prices").fetchone()[0]
+          rets    = c.execute("SELECT COUNT(*) FROM returns").fetchone()[0]
+          secs    = c.execute("SELECT COUNT(*) FROM securities").fetchone()[0]
+          orphans = c.execute("""SELECT COUNT(*) FROM prices p
+                                 LEFT JOIN securities s ON s.security_id = p.security_id
+                                 WHERE s.security_id IS NULL""").fetchone()[0]
+          print(f"{secs} securities | {prices} price rows | {rets} return rows")
+          assert secs >= 33,   f"expected >=33 securities, got {secs}"
+          assert prices > 40_000, f"expected >40k price rows, got {prices}"
+          assert orphans == 0, f"{orphans} orphaned price rows — FK integrity broken"
+          PY
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Verify every SQL report executes
+        run: |
+          python - <<'PY'
+          import sqlite3, pathlib
+          conn = sqlite3.connect("data/portfolio.db")
+          for f in sorted(pathlib.Path("sql/reports").glob("*.sql")):
+              sql = f.read_text()
+              stmts = [s.strip() for s in sql.split(";")
+                       if s.strip() and not all(l.strip().startswith("--") or not l.strip()
+                                                for l in s.strip().splitlines())]
+              for i, s in enumerate(stmts, 1):
+                  conn.execute(s).fetchall()
+              print(f"{f.name}: {len(stmts)} queries OK")
+          PY
+
+      - name: Smoke-test the analysis pipeline
+        run: |
+          python -m src.metrics
+          python -m src.optimise
+          python -m src.backtest

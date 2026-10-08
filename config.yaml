@@ -1,0 +1,136 @@
+# Portfolio Risk & Returns Analytics Platform — configuration
+# Nothing about the universe, dates, or parameters is hardcoded in src/ — it all flows from here.
+
+universe:
+  # 32 securities spanning all 11 GICS sectors.
+  # Deliberately includes pairs expected to be highly correlated (two telecoms, two oil majors,
+  # two money-centre banks, two regulated utilities, two staples) so that the correlation
+  # analysis produces something worth saying rather than a bland heatmap.
+  tickers:
+    - AAPL    # Information Technology
+    - MSFT
+    - INTC
+    - NVDA
+    - GOOGL   # Communication Services
+    - T       #   |- correlated telecom pair
+    - VZ      #   |
+    - AMZN    # Consumer Discretionary
+    - HD
+    - MCD
+    - PG      # Consumer Staples
+    - KO      #   |- correlated staples pair
+    - PEP     #   |
+    - JPM     # Financials
+    - BAC     #   |- correlated money-centre bank pair
+    - GS
+    - JNJ     # Health Care
+    - PFE
+    - UNH
+    - XOM     # Energy
+    - CVX     #   |- correlated oil major pair
+    - COP
+    - BA      # Industrials
+    - CAT
+    - UNP
+    - NEE     # Utilities
+    - DUK     #   |- correlated regulated utility pair
+    - SO      #   |
+    - AMT     # Real Estate
+    - SPG
+    - APD     # Materials
+    - NEM
+
+  benchmark: SP500_EW
+
+  sectors:
+    AAPL: Information Technology
+    MSFT: Information Technology
+    INTC: Information Technology
+    NVDA: Information Technology
+    GOOGL: Communication Services
+    T: Communication Services
+    VZ: Communication Services
+    AMZN: Consumer Discretionary
+    HD: Consumer Discretionary
+    MCD: Consumer Discretionary
+    PG: Consumer Staples
+    KO: Consumer Staples
+    PEP: Consumer Staples
+    JPM: Financials
+    BAC: Financials
+    GS: Financials
+    JNJ: Health Care
+    PFE: Health Care
+    UNH: Health Care
+    XOM: Energy
+    CVX: Energy
+    COP: Energy
+    BA: Industrials
+    CAT: Industrials
+    UNP: Industrials
+    NEE: Utilities
+    DUK: Utilities
+    SO: Utilities
+    AMT: Real Estate
+    SPG: Real Estate
+    APD: Materials
+    NEM: Materials
+
+  names:
+    AAPL: Apple Inc.
+    MSFT: Microsoft Corp.
+    INTC: Intel Corp.
+    NVDA: NVIDIA Corp.
+    GOOGL: Alphabet Inc.
+    T: AT&T Inc.
+    VZ: Verizon Communications
+    AMZN: Amazon.com Inc.
+    HD: Home Depot Inc.
+    MCD: McDonald's Corp.
+    PG: Procter & Gamble Co.
+    KO: Coca-Cola Co.
+    PEP: PepsiCo Inc.
+    JPM: JPMorgan Chase & Co.
+    BAC: Bank of America Corp.
+    GS: Goldman Sachs Group
+    JNJ: Johnson & Johnson
+    PFE: Pfizer Inc.
+    UNH: UnitedHealth Group
+    XOM: Exxon Mobil Corp.
+    CVX: Chevron Corp.
+    COP: ConocoPhillips
+    BA: Boeing Co.
+    CAT: Caterpillar Inc.
+    UNP: Union Pacific Corp.
+    NEE: NextEra Energy Inc.
+    DUK: Duke Energy Corp.
+    SO: Southern Co.
+    AMT: American Tower Corp.
+    SPG: Simon Property Group
+    APD: Air Products & Chemicals
+    NEM: Newmont Corp.
+    SP500_EW: S&P 500 equal-weighted proxy
+
+date_range:
+  start: "2013-02-08"
+  end: "2018-02-07"
+
+risk_free_rate: 0.02          # annualised; ~2% approximates US T-bill yields over 2013-2018
+trading_days_per_year: 252
+confidence_levels: [0.95, 0.99]
+max_weight_per_asset: 0.10    # 10% cap across 32 assets. Equal weight is 3.125%, so this
+                              # permits real tilts — a genuinely binding, informative constraint.
+
+optimiser:
+  lookback_days: 252
+  rebalance: "M"              # M = monthly, Q = quarterly
+  transaction_cost_bps: 10.0
+
+monte_carlo:
+  n_simulations: 10000
+  horizon_days: 252
+
+garch:
+  p: 1
+  q: 1
+  var_confidence: 0.99

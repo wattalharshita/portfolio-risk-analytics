@@ -1,0 +1,17 @@
+# The 505-security source dataset (~30MB) is re-downloaded by src/ingest.py on demand.
+data/raw/*.csv
+!data/raw/.gitkeep
+
+# data/portfolio.db (8MB) and data/factors.csv ARE committed deliberately, so that a
+# fresh clone and a hosted Streamlit deployment both work without running ingestion first.
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.pytest_cache/
+logs/
+reports/*.txt
+.DS_Store
+.ipynb_checkpoints/
